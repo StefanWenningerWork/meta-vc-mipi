@@ -1,0 +1,70 @@
+From 78fa77a689e916d8cafb3aa48c2f131e7b1486f3 Mon Sep 17 00:00:00 2001
+From: Peter Martiessen <peter.martienssen@liquify-consulting.de>
+Date: Sun, 15 Jun 2025 10:36:41 +0000
+Subject: [PATCH 3/4] media: imx8: Fixed missing pixelformat negotiation
+ between isi, csi and camera driver
+
+---
+ drivers/staging/media/imx/imx8-isi-cap.c       | 7 ++++++-
+ drivers/staging/media/imx/imx8-mipi-csi2-sam.c | 6 ++++++
+ 2 files changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/staging/media/imx/imx8-isi-cap.c b/drivers/staging/media/imx/imx8-isi-cap.c
+index c3d6bbeed6a2..4d09ae41a212 100644
+--- a/drivers/staging/media/imx/imx8-isi-cap.c
++++ b/drivers/staging/media/imx/imx8-isi-cap.c
+@@ -667,6 +667,10 @@ static int isi_cap_fmt_init(struct mxc_isi_cap_dev *isi_cap)
+ 	struct v4l2_subdev *src_sd;
+ 	int i, ret;
+ 
++	if (dst_f->fmt != NULL && src_f->fmt != NULL) {
++		return 0;
++	}
++
+ 	src_sd = mxc_get_remote_subdev(&isi_cap->sd, __func__);
+ 	if (!src_sd) {
+ 		v4l2_err(&isi_cap->sd, "get remote subdev fail!\n");
+@@ -683,6 +687,7 @@ static int isi_cap_fmt_init(struct mxc_isi_cap_dev *isi_cap)
+ 
+ 	if (dst_f->width == 0 || dst_f->height == 0)
+ 		set_frame_bounds(dst_f, src_fmt.format.width, src_fmt.format.height);
++	dst_f->fmt = mxc_isi_find_format(NULL, &src_fmt.format.code, 0);
+ 
+ 	if (!dst_f->fmt)
+ 		dst_f->fmt = &mxc_isi_out_formats[0];
+@@ -960,7 +965,7 @@ static int mxc_isi_source_fmt_init(struct mxc_isi_cap_dev *isi_cap)
+ 
+ 	src_fmt.pad = source_pad->index;
+ 	src_fmt.which = V4L2_SUBDEV_FORMAT_ACTIVE;
+-	src_fmt.format.code = MEDIA_BUS_FMT_UYVY8_1X16;
++	src_fmt.format.code = dst_f->fmt->mbus_code;
+ 	src_fmt.format.width = dst_f->width;
+ 	src_fmt.format.height = dst_f->height;
+ 	ret = v4l2_subdev_call(src_sd, pad, set_fmt, NULL, &src_fmt);
+diff --git a/drivers/staging/media/imx/imx8-mipi-csi2-sam.c b/drivers/staging/media/imx/imx8-mipi-csi2-sam.c
+index c21bfeab4553..0b71fcdc2c53 100644
+--- a/drivers/staging/media/imx/imx8-mipi-csi2-sam.c
++++ b/drivers/staging/media/imx/imx8-mipi-csi2-sam.c
+@@ -1208,6 +1208,7 @@ static int mipi_csis_get_fmt(struct v4l2_subdev *mipi_sd,
+ {
+ 	struct csi_state *state = mipi_sd_to_csi_state(mipi_sd);
+ 	struct v4l2_mbus_framefmt *mf = &state->format;
++	struct csis_pix_format const *csis_fmt;
+ 	struct media_pad *source_pad;
+ 	struct v4l2_subdev *sen_sd;
+ 	int ret;
+@@ -1233,6 +1234,11 @@ static int mipi_csis_get_fmt(struct v4l2_subdev *mipi_sd,
+ 		return ret;
+ 	}
+ 
++	csis_fmt = find_csis_format(format->format.code);
++	if (csis_fmt) {
++		state->csis_fmt = csis_fmt;
++	}
++
+ 	memcpy(mf, &format->format, sizeof(struct v4l2_mbus_framefmt));
+ 	return 0;
+ }
+-- 
+2.34.1
+

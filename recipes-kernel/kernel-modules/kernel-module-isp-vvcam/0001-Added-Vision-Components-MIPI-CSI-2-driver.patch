@@ -1,0 +1,81 @@
+From 196e12c4bd3d192829f2cb93c8deaae7e476fb70 Mon Sep 17 00:00:00 2001
+From: Peter Martiessen <peter.martienssen@liquify-consulting.de>
+Date: Tue, 17 Jun 2025 18:54:04 +0000
+Subject: [PATCH] Added Vision Components MIPI CSI-2 driver
+
+---
+ vvcam/v4l2/sensor/Makefile               |  3 ++
+ vvcam/v4l2/sensor/vc-mipi-vvcam/Makefile | 37 ++++++++++++++++++++++++
+ 2 files changed, 40 insertions(+)
+ create mode 100644 vvcam/v4l2/sensor/vc-mipi-vvcam/Makefile
+
+diff --git a/vvcam/v4l2/sensor/Makefile b/vvcam/v4l2/sensor/Makefile
+index 92f515f..f19004e 100644
+--- a/vvcam/v4l2/sensor/Makefile
++++ b/vvcam/v4l2/sensor/Makefile
+@@ -3,16 +3,19 @@ all:
+ 	@cd os08a20; make || exit $$?;
+ 	@cd ar1335;  make || exit $$?;
+ 	@cd camera-proxy-driver;  make || exit $$?;
++	@cd vc-mipi-vvcam;        make || exit $$?;
+ 
+ clean:
+ 	@cd ov2775;   make clean;
+ 	@cd os08a20;  make clean;
+ 	@cd ar1335;   make clean;
+ 	@cd camera-proxy-driver;   make clean;
++	@cd vc-mipi-vvcam;         make clean;
+ 
+ modules_install:
+ 	@cd ov2775;   make modules_install;
+ 	@cd os08a20;  make modules_install;
+ 	@cd ar1335;   make modules_install;
+ 	@cd camera-proxy-driver;   make modules_install;
++	@cd vc-mipi-vvcam;         make modules_install;
+ 
+diff --git a/vvcam/v4l2/sensor/vc-mipi-vvcam/Makefile b/vvcam/v4l2/sensor/vc-mipi-vvcam/Makefile
+new file mode 100644
+index 0000000..9fe7c7e
+--- /dev/null
++++ b/vvcam/v4l2/sensor/vc-mipi-vvcam/Makefile
+@@ -0,0 +1,37 @@
++PWD := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
++
++TARGET = vc-mipi-vvcam
++
++obj-m +=$(TARGET).o
++$(TARGET)-objs += vc_mipi_camera.o vc_mipi_core.o vc_mipi_modules.o
++
++ccflags-y += -I$(PWD)/../../../common/
++ccflags-y += -O2 -Werror -Wmissing-declarations -Wmissing-prototypes
++
++ARCH_TYPE ?= arm64
++ANDROID ?= no
++
++ifeq ($(ANDROID), yes)
++
++V := 1
++
++all:
++	@$(MAKE) V=$(V) -C $(KERNEL_SRC) ARCH=$(ARCH_TYPE) M=$(PWD) modules
++modules_install:
++	@$(MAKE) V=$(V) -C $(KERNEL_SRC) M=$(PWD) modules_install
++clean:
++	@rm -rf modules.order Module.symvers
++	@find ../ -name "*.o" | xargs rm -f
++	@find ../ -name "*.ko" | xargs rm -f
++
++else
++
++all:
++	make -C $(KERNEL_SRC) ARCH=$(ARCH_TYPE) M=$(PWD) modules
++modules_install:
++	make -C $(KERNEL_SRC) M=$(PWD) modules_install
++clean:
++	rm -rf $($(TARGET)-objs)
++	make -C $(KERNEL_SRC) M=$(PWD) clean
++
++endif
+-- 
+2.34.1
+
