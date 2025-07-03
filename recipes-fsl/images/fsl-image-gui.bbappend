@@ -1,0 +1,1 @@
+IMAGE_INSTALL:append = " v4l2-test"
