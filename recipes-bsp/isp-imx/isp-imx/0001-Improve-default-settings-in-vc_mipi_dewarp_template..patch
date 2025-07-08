@@ -1,0 +1,103 @@
+From 35560d15341850488f1d9a0f7a702fb8d9cbbbd0 Mon Sep 17 00:00:00 2001
+From: Peter Martiessen <peter.martienssen@liquify-consulting.de>
+Date: Tue, 1 Jul 2025 12:18:13 +0000
+Subject: [PATCH] Improve default settings in vc_mipi_dewarp_template.json
+
+---
+ .../vc_mipi_dewarp_template.json              | 18 ++++++++---------
+ imx/vc-mipi-setup.sh                          | 20 +++++++++++++++----
+ 2 files changed, 25 insertions(+), 13 deletions(-)
+
+diff --git a/dewarp/dewarp_config/vc_mipi_dewarp_template.json b/dewarp/dewarp_config/vc_mipi_dewarp_template.json
+index 1e9d8d1..aafa98b 100644
+--- a/dewarp/dewarp_config/vc_mipi_dewarp_template.json
++++ b/dewarp/dewarp_config/vc_mipi_dewarp_template.json
+@@ -6,28 +6,28 @@
+ 				"height" : {height}
+ 			},
+ 
+-			"?dewarpType": "LENS_CORRECTION, FISHEYE_EXPAND, SPLIT_SCREEN",
+-			"dewarpType": "FISHEYE_DEWARP",
++			"?dewarpType": "FISHEYE_DEWARP, FISHEYE_EXPAND, SPLIT_SCREEN",
++			"dewarpType": "LENS_CORRECTION",
+ 
+ 			"scale": {
+ 				"roix"   : 0,
+ 				"roiy"   : 0,
+-				"factor" : 1.0
++				"factor" : 1
+ 			},
+ 
+ 			"split": {
+-				"horizon_line"      : 540,
+-				"vertical_line_up"  : 960,
+-				"vertical_line_down": 960
++				"horizon_line"      : 0,
++				"vertical_line_up"  : 0,
++				"vertical_line_down": 0
+ 			},
+ 
+ 			"bypass" : true,
+ 			"hflip"  : false,
+ 			"vflip"  : false,
+ 
+-			"camera_matrix"   :[ 3.0022987437313564e+003, 0., 9.8824205797959212e+002, 0., 3.0022987437313564e+003, 6.2928156578904930e+002, 0., 0., 1. ],
+-			"distortion_coeff": [ 6.9630543951305723e-001, -2.1644937552111827e+000, 3.7290916239141499e-002, 9.5937228205523681e-003, 1.6154212751224615e+000 ],
+-			"perspective"     : [1.0, 0, 0, 0, 1, 0, 0, 0, 1]
++			"camera_matrix"   :[ 1000, 0, {width2}, 0, 1000, {height2}, 0, 0, 1 ],
++			"distortion_coeff": [ 0, 0, 0, 0, 0 ],
++			"perspective"     : [ 1, 0, 0, 0, 1, 0, 0, 0, 1 ]
+ 
+ 		}
+ 	]
+diff --git a/imx/vc-mipi-setup.sh b/imx/vc-mipi-setup.sh
+index 211fdac..5280a61 100644
+--- a/imx/vc-mipi-setup.sh
++++ b/imx/vc-mipi-setup.sh
+@@ -29,8 +29,7 @@ print() {
+     echo ${1} >$(tty)
+ }
+ 
+-detect_camera_device()
+-{
++detect_camera_device() {
+     local i2c_bus_addresses=($(find /sys/firmware/devicetree/base/soc@0/ -regex ".*i2c@${1}/vc_mipi.*/compatible" | grep -m1 -oP "(?<=i2c@)[0-9a-f]+"))
+     if [[ ${#i2c_bus_addresses[@]} == 0 ]]; then
+         print "No VC MIPI entry found in device tree!"
+@@ -115,6 +114,7 @@ create_tuning_files() {
+         IMX566) width=2848; height=2848 ;;
+         IMX567) width=2464; height=2064 ;;
+         IMX568) width=2464; height=2064 ;;
++        IMX577) width=4032; height=3040 ;;
+         IMX900) width=2048; height=1536 ;;
+         IMX900) width=2048; height=1536 ;;
+         OV7251) width=640;  height=480  ;;
+@@ -133,11 +133,23 @@ create_tuning_files() {
+     if [[ ! -e ${dewarp_file} || ! -e ${tuning_file} ]] || $force; then
+         print "Image size will be set to ${width}x${height}"
+ 
++        width2=$((width / 2))
++        height2=$((height / 2))
++
+         cd /opt/imx8-isp/bin
++        pwd
+         echo "Create ${dewarp_file}"
+-        sed -e "s/{width}/${width}/g" -e "s/{height}/${height}/g" dewarp_config/vc_mipi_dewarp_template.json > ${dewarp_file}
++        sed -e "s/{width}/${width}/g" \
++            -e "s/{width2}/${width2}/g" \
++            -e "s/{height}/${height}/g" \
++            -e "s/{height2}/${height2}/g" \
++            dewarp_config/vc_mipi_dewarp_template.json > ${dewarp_file}
++
++        pwd
+         echo "Create ${tuning_file}"
+-        sed -e "s/{width}/${width}/g" -e "s/{height}/${height}/g" vc_mipi_tuning_template.xml > ${tuning_file}
++        sed -e "s/{width}/${width}/g" \
++            -e "s/{height}/${height}/g" \
++            vc_mipi_tuning_template.xml > ${tuning_file}
+ 
+         restart_service
+     else
+-- 
+2.34.1
+

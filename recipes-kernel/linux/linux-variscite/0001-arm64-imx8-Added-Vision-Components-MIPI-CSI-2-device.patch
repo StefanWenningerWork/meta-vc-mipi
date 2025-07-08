@@ -1,0 +1,652 @@
+From d97a5b6fba5744f611202c20fbd24ee65c029f8a Mon Sep 17 00:00:00 2001
+From: Peter Martiessen <peter.martienssen@liquify-consulting.de>
+Date: Fri, 13 Jun 2025 16:18:11 +0000
+Subject: [PATCH 1/4] arm64: imx8: Added Vision Components MIPI CSI-2 device
+ tree files
+
+---
+ arch/arm64/boot/dts/freescale/Makefile        |   6 +
+ ...-dt8mcustomboard-vc-mipi-isi-csi0-csi1.dts | 129 ++++++++++++++++++
+ ...-dart-dt8mcustomboard-vc-mipi-isi-csi0.dts | 106 ++++++++++++++
+ ...-dart-dt8mcustomboard-vc-mipi-isi-csi1.dts | 107 +++++++++++++++
+ ...-dt8mcustomboard-vc-mipi-isp-csi0-csi1.dts | 129 ++++++++++++++++++
+ ...-dart-dt8mcustomboard-vc-mipi-isp-csi0.dts | 106 ++++++++++++++
+ 6 files changed, 583 insertions(+)
+ create mode 100644 arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isi-csi0-csi1.dts
+ create mode 100644 arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isi-csi0.dts
+ create mode 100644 arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isi-csi1.dts
+ create mode 100644 arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isp-csi0-csi1.dts
+ create mode 100644 arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isp-csi0.dts
+
+diff --git a/arch/arm64/boot/dts/freescale/Makefile b/arch/arm64/boot/dts/freescale/Makefile
+index fcd54bea7409..c0c0d38ec62b 100644
+--- a/arch/arm64/boot/dts/freescale/Makefile
++++ b/arch/arm64/boot/dts/freescale/Makefile
+@@ -189,6 +189,12 @@ dtb-$(CONFIG_ARCH_MXC) += imx8mp-var-dart-dt8mcustomboard-basler-isi0.dtb
+ dtb-$(CONFIG_ARCH_MXC) += imx8mp-var-dart-dt8mcustomboard-basler-isp0-m7.dtb
+ dtb-$(CONFIG_ARCH_MXC) += imx8mp-var-dart-dt8mcustomboard-basler-isp0.dtb
+ dtb-$(CONFIG_ARCH_MXC) += imx8mp-var-dart-dt8mcustomboard-m7.dtb
++dtb-$(CONFIG_ARCH_MXC) += imx8mp-var-dart-dt8mcustomboard-vc-mipi-isi-csi0.dtb \
++			  imx8mp-var-dart-dt8mcustomboard-vc-mipi-isi-csi1.dtb \
++			  imx8mp-var-dart-dt8mcustomboard-vc-mipi-isi-csi0-csi1.dtb \
++			  imx8mp-var-dart-dt8mcustomboard-vc-mipi-isp-csi0.dtb \
++			  imx8mp-var-dart-dt8mcustomboard-vc-mipi-isp-csi0-csi1.dtb
++
+ 
+ imx8mp-var-dart-1.x-dt8mcustomboard-dtbs := imx8mp-var-dart-dt8mcustomboard.dtb imx8mp-var-dart-1.x.dtbo
+ imx8mp-var-dart-1.x-dt8mcustomboard-basler-isi0-m7-dtbs := imx8mp-var-dart-dt8mcustomboard-basler-isi0-m7.dtb imx8mp-var-dart-1.x.dtbo
+diff --git a/arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isi-csi0-csi1.dts b/arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isi-csi0-csi1.dts
+new file mode 100644
+index 000000000000..8b7bf90c2586
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isi-csi0-csi1.dts
+@@ -0,0 +1,129 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++/*
++ * Copyright 2019 NXP
++ * Copyright 2020-2021 Variscite Ltd.
++ */
++
++#include "imx8mp-var-dart-dt8mcustomboard.dts"
++
++/ {
++        model = "Variscite DART-MX8M-PLUS on DT8MCustomBoard 1.x with VC MIPI CSI-2 camera on ISI0";
++};
++
++// ------------------------------------------------------------------------------------------------
++//  Supported number of lanes
++// -----+------------------------------------------------------------------------------------------
++//  1   | OV7251, IMX296, IMX297
++//  2   | OV9281, IMX264, IMX265
++//  2,4 | IMX178, IMX183, IMX226, IMX250, IMX252, IMX273, IMX290, IMX327, IMX335, IMX392,
++//      | IMX412, IMX415, IMX568
++// -----+------------------------------------------------------------------------------------------
++#define VC_MIPI_LANES       2   // 1, 2, 4 Lanes
++// ------------------------------------------------------------------------------------------------
++//   Sensor Manufacturer
++// -----+------------------------------------------------------------------------------------------
++//   1  | Sony Sensor (IMX)
++//   2  | Omni Vision Sensor (OV)
++// -----+------------------------------------------------------------------------------------------
++#define VC_MIPI_MANUFACTURER 1
++
++#if VC_MIPI_LANES == 1
++        #define CSI_LANES 1
++	#define DATA_LANES 1
++#endif
++#if VC_MIPI_LANES == 2
++        #define CSI_LANES 2
++	#define DATA_LANES 1 2
++#endif
++#if VC_MIPI_LANES == 4
++        #define CSI_LANES 4
++	#define DATA_LANES 1 2 3 4
++#endif
++
++&i2c2 {
++        /delete-node/ov5640_mipi@3c;
++
++#if VC_MIPI_MANUFACTURER == 1
++        vc_mipi@1a {
++                reg        = <0x1a>;
++#else
++        vc_mipi@60 {
++                reg        = <0x60>;
++#endif
++                compatible = "vc,vc_mipi";
++                csi_id     = <0>;
++                status     = "okay";
++
++                port {
++                        vc_mipi_ep_0: endpoint {
++                                clock-lanes      = <0>;
++                                data-lanes       = <DATA_LANES>;
++                                remote-endpoint  = <&mipi_csi0_ep>;
++                        };
++                };
++        };
++};
++
++&i2c4 {
++        /delete-node/ov5640_mipi@3c;
++
++#if VC_MIPI_MANUFACTURER == 1
++        vc_mipi@1a {
++                reg        = <0x1a>;
++#else
++        vc_mipi@60 {
++                reg        = <0x60>;
++#endif
++                compatible = "vc,vc_mipi";
++                csi_id     = <1>;
++                status     = "okay";
++
++                port {
++                        vc_mipi_ep_1: endpoint {
++                                clock-lanes      = <0>;
++                                data-lanes       = <DATA_LANES>;
++                                remote-endpoint  = <&mipi_csi1_ep>;
++                        };
++                };
++        };
++};
++
++&mipi_csi0_ep {
++        remote-endpoint = <&vc_mipi_ep_0>;
++        data-lanes      = <CSI_LANES>;
++        csis-hs-settle  = <33>;
++        csis-clk-settle = <2>;
++        csis-wclk;
++};
++
++&mipi_csi1_ep {
++        remote-endpoint = <&vc_mipi_ep_1>;
++        data-lanes      = <CSI_LANES>;
++        csis-hs-settle  = <33>;
++        csis-clk-settle = <2>;
++        csis-wclk;
++};
++
++&cameradev {
++        status = "okay";
++};
++
++&isi_0 {
++        status = "okay";
++};
++
++&isi_1 {
++        status = "okay";
++};
++
++&isp_0 {
++        status = "disabled";
++};
++
++&isp_1 {
++        status = "disabled";
++};
++
++&dewarp {
++        status = "disabled";
++};
+\ No newline at end of file
+diff --git a/arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isi-csi0.dts b/arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isi-csi0.dts
+new file mode 100644
+index 000000000000..183be4fbc80f
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isi-csi0.dts
+@@ -0,0 +1,106 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++/*
++ * Copyright 2019 NXP
++ * Copyright 2020-2021 Variscite Ltd.
++ */
++
++#include "imx8mp-var-dart-dt8mcustomboard.dts"
++
++/ {
++        model = "Variscite DART-MX8M-PLUS on DT8MCustomBoard 1.x with VC MIPI CSI-2 camera on ISI0";
++};
++
++// ------------------------------------------------------------------------------------------------
++//  Supported number of lanes
++// -----+------------------------------------------------------------------------------------------
++//  1   | OV7251, IMX296, IMX297
++//  2   | OV9281, IMX264, IMX265
++//  2,4 | IMX178, IMX183, IMX226, IMX250, IMX252, IMX273, IMX290, IMX327, IMX335, IMX392,
++//      | IMX412, IMX415, IMX568
++// -----+------------------------------------------------------------------------------------------
++#define VC_MIPI_LANES       2   // 1, 2, 4 Lanes
++// ------------------------------------------------------------------------------------------------
++//   Sensor Manufacturer
++// -----+------------------------------------------------------------------------------------------
++//   1  | Sony Sensor (IMX)
++//   2  | Omni Vision Sensor (OV)
++// -----+------------------------------------------------------------------------------------------
++#define VC_MIPI_MANUFACTURER 1
++
++#if VC_MIPI_LANES == 1
++        #define CSI_LANES 1
++	#define DATA_LANES 1
++#endif
++#if VC_MIPI_LANES == 2
++        #define CSI_LANES 2
++	#define DATA_LANES 1 2
++#endif
++#if VC_MIPI_LANES == 4
++        #define CSI_LANES 4
++	#define DATA_LANES 1 2 3 4
++#endif
++
++&i2c2 {
++        /delete-node/ov5640_mipi@3c;
++
++#if VC_MIPI_MANUFACTURER == 1
++        vc_mipi@1a {
++                reg        = <0x1a>;
++#else
++        vc_mipi@60 {
++                reg        = <0x60>;
++#endif
++                compatible = "vc,vc_mipi";
++                csi_id     = <0>;
++                status     = "okay";
++
++                port {
++                        vc_mipi_ep_0: endpoint {
++                                clock-lanes      = <0>;
++                                data-lanes       = <DATA_LANES>;
++                                remote-endpoint  = <&mipi_csi0_ep>;
++                        };
++                };
++        };
++};
++
++&i2c4 {
++        /delete-node/ov5640_mipi@3c;
++};
++
++&mipi_csi0_ep {
++        remote-endpoint = <&vc_mipi_ep_0>;
++        data-lanes      = <CSI_LANES>;
++        csis-hs-settle  = <33>;
++        csis-clk-settle = <2>;
++        csis-wclk;
++};
++
++&mipi_csi_1 {
++        status = "disabled";
++        /delete-node/port@1;
++};
++
++&cameradev {
++        status = "okay";
++};
++
++&isi_0 {
++        status = "okay";
++};
++
++&isi_1 {
++        status = "disabled";
++};
++
++&isp_0 {
++        status = "disabled";
++};
++
++&isp_1 {
++        status = "disabled";
++};
++
++&dewarp {
++        status = "disabled";
++};
+\ No newline at end of file
+diff --git a/arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isi-csi1.dts b/arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isi-csi1.dts
+new file mode 100644
+index 000000000000..5a235d2d6416
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isi-csi1.dts
+@@ -0,0 +1,107 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++/*
++ * Copyright 2019 NXP
++ * Copyright 2020-2021 Variscite Ltd.
++ */
++
++#include "imx8mp-var-dart-dt8mcustomboard.dts"
++
++/ {
++        model = "Variscite DART-MX8M-PLUS on DT8MCustomBoard 1.x with VC MIPI CSI-2 camera on ISI0";
++};
++
++// ------------------------------------------------------------------------------------------------
++//  Supported number of lanes
++// -----+------------------------------------------------------------------------------------------
++//  1   | OV7251, IMX296, IMX297
++//  2   | OV9281, IMX264, IMX265
++//  2,4 | IMX178, IMX183, IMX226, IMX250, IMX252, IMX273, IMX290, IMX327, IMX335, IMX392,
++//      | IMX412, IMX415, IMX568
++// -----+------------------------------------------------------------------------------------------
++#define VC_MIPI_LANES       2   // 1, 2, 4 Lanes
++// ------------------------------------------------------------------------------------------------
++//   Sensor Manufacturer
++// -----+------------------------------------------------------------------------------------------
++//   1  | Sony Sensor (IMX)
++//   2  | Omni Vision Sensor (OV)
++// -----+------------------------------------------------------------------------------------------
++#define VC_MIPI_MANUFACTURER 1
++
++#if VC_MIPI_LANES == 1
++        #define CSI_LANES 1
++	#define DATA_LANES 1
++#endif
++#if VC_MIPI_LANES == 2
++        #define CSI_LANES 2
++	#define DATA_LANES 1 2
++#endif
++#if VC_MIPI_LANES == 4
++        #define CSI_LANES 4
++	#define DATA_LANES 1 2 3 4
++#endif
++
++&i2c2 {
++        /delete-node/ov5640_mipi@3c;
++};
++
++&i2c4 {
++        /delete-node/ov5640_mipi@3c;
++
++#if VC_MIPI_MANUFACTURER == 1
++        vc_mipi@1a {
++                reg        = <0x1a>;
++#else
++        vc_mipi@60 {
++                reg        = <0x60>;
++#endif
++                compatible = "vc,vc_mipi";
++                csi_id     = <1>;
++                status     = "okay";
++
++                port {
++                        vc_mipi_ep_1: endpoint {
++                                clock-lanes      = <0>;
++                                data-lanes       = <DATA_LANES>;
++                                remote-endpoint  = <&mipi_csi1_ep>;
++                        };
++                };
++        };
++};
++
++&mipi_csi_0 {
++        status = "disabled";
++        /delete-node/port;
++};
++
++&mipi_csi1_ep {
++        remote-endpoint = <&vc_mipi_ep_1>;
++        data-lanes      = <CSI_LANES>;
++        csis-hs-settle  = <33>;
++        csis-clk-settle = <2>;
++        csis-wclk;
++};
++
++&cameradev {
++        status = "okay";
++};
++
++&isi_0 {
++        interface = <3 0 2>;
++        status = "okay";
++};
++
++&isi_1 {
++        status = "disabled";
++};
++
++&isp_0 {
++        status = "disabled";
++};
++
++&isp_1 {
++        status = "disabled";
++};
++
++&dewarp {
++        status = "disabled";
++};
+\ No newline at end of file
+diff --git a/arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isp-csi0-csi1.dts b/arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isp-csi0-csi1.dts
+new file mode 100644
+index 000000000000..90d6a131ccc5
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isp-csi0-csi1.dts
+@@ -0,0 +1,129 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++/*
++ * Copyright 2019 NXP
++ * Copyright 2020-2021 Variscite Ltd.
++ */
++
++#include "imx8mp-var-dart-dt8mcustomboard.dts"
++
++/ {
++        model = "Variscite DART-MX8M-PLUS on DT8MCustomBoard 1.x with VC MIPI CSI-2 camera on ISI0";
++};
++
++// ------------------------------------------------------------------------------------------------
++//  Supported number of lanes
++// -----+------------------------------------------------------------------------------------------
++//  1   | OV7251, IMX296, IMX297
++//  2   | OV9281, IMX264, IMX265
++//  2,4 | IMX178, IMX183, IMX226, IMX250, IMX252, IMX273, IMX290, IMX327, IMX335, IMX392,
++//      | IMX412, IMX415, IMX568
++// -----+------------------------------------------------------------------------------------------
++#define VC_MIPI_LANES       2   // 1, 2, 4 Lanes
++// ------------------------------------------------------------------------------------------------
++//   Sensor Manufacturer
++// -----+------------------------------------------------------------------------------------------
++//   1  | Sony Sensor (IMX)
++//   2  | Omni Vision Sensor (OV)
++// -----+------------------------------------------------------------------------------------------
++#define VC_MIPI_MANUFACTURER 1
++
++#if VC_MIPI_LANES == 1
++        #define CSI_LANES 1
++	#define DATA_LANES 1
++#endif
++#if VC_MIPI_LANES == 2
++        #define CSI_LANES 2
++	#define DATA_LANES 1 2
++#endif
++#if VC_MIPI_LANES == 4
++        #define CSI_LANES 4
++	#define DATA_LANES 1 2 3 4
++#endif
++
++&i2c2 {
++        /delete-node/ov5640_mipi@3c;
++
++#if VC_MIPI_MANUFACTURER == 1
++        vc_mipi@1a {
++                reg        = <0x1a>;
++#else
++        vc_mipi@60 {
++                reg        = <0x60>;
++#endif
++                compatible = "vc,vc_mipi";
++                csi_id     = <0>;
++                status     = "okay";
++
++                port {
++                        vc_mipi_ep_0: endpoint {
++                                clock-lanes      = <0>;
++                                data-lanes       = <DATA_LANES>;
++                                remote-endpoint  = <&mipi_csi0_ep>;
++                        };
++                };
++        };
++};
++
++&i2c4 {
++        /delete-node/ov5640_mipi@3c;
++
++#if VC_MIPI_MANUFACTURER == 1
++        vc_mipi@1a {
++                reg        = <0x1a>;
++#else
++        vc_mipi@60 {
++                reg        = <0x60>;
++#endif
++                compatible = "vc,vc_mipi";
++                csi_id     = <1>;
++                status     = "okay";
++
++                port {
++                        vc_mipi_ep_1: endpoint {
++                                clock-lanes      = <0>;
++                                data-lanes       = <DATA_LANES>;
++                                remote-endpoint  = <&mipi_csi1_ep>;
++                        };
++                };
++        };
++};
++
++&mipi_csi0_ep {
++        remote-endpoint = <&vc_mipi_ep_0>;
++        data-lanes      = <CSI_LANES>;
++        csis-hs-settle  = <33>;
++        csis-clk-settle = <2>;
++        csis-wclk;
++};
++
++&mipi_csi1_ep {
++        remote-endpoint = <&vc_mipi_ep_1>;
++        data-lanes      = <CSI_LANES>;
++        csis-hs-settle  = <33>;
++        csis-clk-settle = <2>;
++        csis-wclk;
++};
++
++&cameradev {
++        status = "okay";
++};
++
++&isi_0 {
++        status = "disabled";
++};
++
++&isi_1 {
++        status = "disabled";
++};
++
++&isp_0 {
++        status = "okay";
++};
++
++&isp_1 {
++        status = "okay";
++};
++
++&dewarp {
++        status = "okay";
++};
+\ No newline at end of file
+diff --git a/arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isp-csi0.dts b/arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isp-csi0.dts
+new file mode 100644
+index 000000000000..34fe24466513
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/imx8mp-var-dart-dt8mcustomboard-vc-mipi-isp-csi0.dts
+@@ -0,0 +1,106 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++/*
++ * Copyright 2019 NXP
++ * Copyright 2020-2021 Variscite Ltd.
++ */
++
++#include "imx8mp-var-dart-dt8mcustomboard.dts"
++
++/ {
++        model = "Variscite DART-MX8M-PLUS on DT8MCustomBoard 1.x with VC MIPI CSI-2 camera on ISI0";
++};
++
++// ------------------------------------------------------------------------------------------------
++//  Supported number of lanes
++// -----+------------------------------------------------------------------------------------------
++//  1   | OV7251, IMX296, IMX297
++//  2   | OV9281, IMX264, IMX265
++//  2,4 | IMX178, IMX183, IMX226, IMX250, IMX252, IMX273, IMX290, IMX327, IMX335, IMX392,
++//      | IMX412, IMX415, IMX568
++// -----+------------------------------------------------------------------------------------------
++#define VC_MIPI_LANES       2   // 1, 2, 4 Lanes
++// ------------------------------------------------------------------------------------------------
++//   Sensor Manufacturer
++// -----+------------------------------------------------------------------------------------------
++//   1  | Sony Sensor (IMX)
++//   2  | Omni Vision Sensor (OV)
++// -----+------------------------------------------------------------------------------------------
++#define VC_MIPI_MANUFACTURER 1
++
++#if VC_MIPI_LANES == 1
++        #define CSI_LANES 1
++	#define DATA_LANES 1
++#endif
++#if VC_MIPI_LANES == 2
++        #define CSI_LANES 2
++	#define DATA_LANES 1 2
++#endif
++#if VC_MIPI_LANES == 4
++        #define CSI_LANES 4
++	#define DATA_LANES 1 2 3 4
++#endif
++
++&i2c2 {
++        /delete-node/ov5640_mipi@3c;
++
++#if VC_MIPI_MANUFACTURER == 1
++        vc_mipi@1a {
++                reg        = <0x1a>;
++#else
++        vc_mipi@60 {
++                reg        = <0x60>;
++#endif
++                compatible = "vc,vc_mipi";
++                csi_id     = <0>;
++                status     = "okay";
++
++                port {
++                        vc_mipi_ep_0: endpoint {
++                                clock-lanes      = <0>;
++                                data-lanes       = <DATA_LANES>;
++                                remote-endpoint  = <&mipi_csi0_ep>;
++                        };
++                };
++        };
++};
++
++&i2c4 {
++        /delete-node/ov5640_mipi@3c;
++};
++
++&mipi_csi0_ep {
++        remote-endpoint = <&vc_mipi_ep_0>;
++        data-lanes      = <CSI_LANES>;
++        csis-hs-settle  = <33>;
++        csis-clk-settle = <2>;
++        csis-wclk;
++};
++
++&mipi_csi_1 {
++        status = "disabled";
++        /delete-node/port@1;
++};
++
++&cameradev {
++        status = "okay";
++};
++
++&isi_0 {
++        status = "disabled";
++};
++
++&isi_1 {
++        status = "disabled";
++};
++
++&isp_0 {
++        status = "okay";
++};
++
++&isp_1 {
++        status = "disabled";
++};
++
++&dewarp {
++        status = "okay";
++};
+\ No newline at end of file
+-- 
+2.34.1
+
