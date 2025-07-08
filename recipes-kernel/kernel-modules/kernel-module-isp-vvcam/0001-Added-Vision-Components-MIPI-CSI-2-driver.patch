@@ -1,0 +1,44 @@
+From 9310d4d37ed7f2056b84492d7e654018a61643b3 Mon Sep 17 00:00:00 2001
+From: Peter Martiessen <peter.martienssen@liquify-consulting.de>
+Date: Sat, 14 Jun 2025 12:07:24 +0000
+Subject: [PATCH] Added Vision Components MIPI CSI-2 driver
+
+---
+ build-all-vvcam.sh                       | 1 +
+ vvcam/v4l2/sensor/Makefile               | 1 +
+ vvcam/v4l2/sensor/vc-mipi-vvcam/Makefile | 3 +++
+ 3 files changed, 5 insertions(+)
+ create mode 100644 vvcam/v4l2/sensor/vc-mipi-vvcam/Makefile
+
+diff --git a/build-all-vvcam.sh b/build-all-vvcam.sh
+index 7a5e77f..f74e372 100755
+--- a/build-all-vvcam.sh
++++ b/build-all-vvcam.sh
+@@ -46,3 +46,4 @@ cp vvcam/v4l2/sensor/os08a20/os08a20.ko modules
+ cp vvcam/v4l2/vvcam-isp.ko modules
+ cp vvcam/v4l2/video/vvcam-video.ko modules
+ cp vvcam/v4l2/sensor/camera-proxy-driver/basler-camera-driver-vvcam.ko modules
++cp vvcam/v4l2/sensor/vc-mipi-vvcam/vc-mipi-vvcam.ko modules
+diff --git a/vvcam/v4l2/sensor/Makefile b/vvcam/v4l2/sensor/Makefile
+index 61a69ff..a6adf75 100755
+--- a/vvcam/v4l2/sensor/Makefile
++++ b/vvcam/v4l2/sensor/Makefile
+@@ -2,4 +2,5 @@ obj-m += ov2775/
+ obj-m += os08a20/
+ obj-m += camera-proxy-driver/
+ obj-m += ar1335/
++obj-m += vc-mipi-vvcam/
+ 
+diff --git a/vvcam/v4l2/sensor/vc-mipi-vvcam/Makefile b/vvcam/v4l2/sensor/vc-mipi-vvcam/Makefile
+new file mode 100644
+index 0000000..787a75b
+--- /dev/null
++++ b/vvcam/v4l2/sensor/vc-mipi-vvcam/Makefile
+@@ -0,0 +1,3 @@
++EXTRA_CFLAGS += -I$(PWD)/../common/ -O2 -Werror
++vc-mipi-vvcam-objs += vc_mipi_camera.o vc_mipi_core.o vc_mipi_modules.o
++obj-m += vc-mipi-vvcam.o
+\ No newline at end of file
+-- 
+2.34.1
+
