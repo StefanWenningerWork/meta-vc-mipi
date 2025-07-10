@@ -7,7 +7,7 @@ SRC_URI += "\
 "
 
 SRCREV_vc_mipi_nxp = "534a80e399c87acccd67f7b6c96f0b978d4c2391"
-SRCREV_vc_mipi_core = "222424b05c16bdd7781d502793893cd0563fa3e4"
+SRCREV_vc_mipi_core = "12d689ea68ac180237c5a62991d666c600139c2c"
 SRCREV_FORMAT = "vc_mipi_nxp_vc_mipi_core"
 
 DRV_DIR = "${S}/sensor/vc-mipi-vvcam"
