@@ -1,0 +1,116 @@
+From 1ee15681331f411b21b3ba9b82a91a5d8701f48f Mon Sep 17 00:00:00 2001
+From: Peter Martiessen <peter.martienssen@liquify-consulting.de>
+Date: Mon, 14 Jul 2025 19:35:36 +0000
+Subject: [PATCH] Fix vc-mipi-setup.sh to be more generic and usable on toradex
+
+---
+ imx/vc-mipi-setup.sh | 38 ++++++++++++++++++++------------------
+ 1 file changed, 20 insertions(+), 18 deletions(-)
+
+diff --git a/imx/vc-mipi-setup.sh b/imx/vc-mipi-setup.sh
+index 5280a61..0a39302 100644
+--- a/imx/vc-mipi-setup.sh
++++ b/imx/vc-mipi-setup.sh
+@@ -1,8 +1,5 @@
+ #!/bin/bash
+ 
+-i2c_bus_address_c0="30a30000"
+-i2c_bus_address_c1="30a50000"
+-
+ called_from_service=false
+ force_create=false
+ 
+@@ -12,7 +9,8 @@ usage() {
+     echo "Setup default ISP tuning files."
+     echo "                                                                      "
+     echo "Supported actions:                                                    "
+-    echo " create <w> <h>           Creates or recreates tuning files           "
++    echo " setup-c0 <w> <h>         Creates or recreates tuning files for cam 0 "
++    echo " setup-c1 <w> <h>         Creates or recreates tuning files for cam 1 "
+     echo " init                     Creates tuning files for the detected cam   "
+     echo " restart                  Restarts service                            "
+     echo "                                                                      "
+@@ -30,13 +28,20 @@ print() {
+ }
+ 
+ detect_camera_device() {
+-    local i2c_bus_addresses=($(find /sys/firmware/devicetree/base/soc@0/ -regex ".*i2c@${1}/vc_mipi.*/compatible" | grep -m1 -oP "(?<=i2c@)[0-9a-f]+"))
+-    if [[ ${#i2c_bus_addresses[@]} == 0 ]]; then
+-        print "No VC MIPI entry found in device tree!"
++    local i2c_bus_address=
++    local vc_mipi_drivers=($(find /sys/firmware/devicetree/base/soc@0/ -regex ".*vc_mipi.*/csi_id"))
++    for vc_mipi_driver in "${vc_mipi_drivers[@]}"; do
++        local csi_id=$(od -An -t u1 ${vc_mipi_driver} | awk '{print $4}')
++        if [[ ${1} == ${csi_id} ]]; then
++            i2c_bus_address=$(echo ${vc_mipi_driver} | grep -oP "(?<=i2c@)[0-9a-f]+")
++            break
++        fi
++    done
++    if [[ -z ${i2c_bus_address} ]]; then
++        print "No VC MIPI entry found in device tree for camera ${1}!"
+         return
+     fi
+ 
+-    local i2c_bus_address=${i2c_bus_addresses[0]}
+     local i2c_bus_number=$(i2cdetect -l | grep -oP "(?<=i2c-)[0-9]{1,2}(?=.*${i2c_bus_address})")
+     if [[ ${#i2c_bus_addresses[@]} == 2 ]]; then
+         local i2c_bus_number0=${i2c_bus_number}
+@@ -81,10 +86,9 @@ create_cfg_file() {
+ 
+ create_tuning_files() {
+     local camera=${1}
+-    local i2c_bus_signature=${2}
+-    local width=${3}
+-    local height=${4}
+-    local sensor_type=$(detect_camera_device ${i2c_bus_signature})
++    local width=${2}
++    local height=${3}
++    local sensor_type=$(detect_camera_device ${camera})
+     if [[ -z ${sensor_type} ]]; then
+         exit 1
+     fi
+@@ -137,7 +141,6 @@ create_tuning_files() {
+         height2=$((height / 2))
+ 
+         cd /opt/imx8-isp/bin
+-        pwd
+         echo "Create ${dewarp_file}"
+         sed -e "s/{width}/${width}/g" \
+             -e "s/{width2}/${width2}/g" \
+@@ -145,7 +148,6 @@ create_tuning_files() {
+             -e "s/{height2}/${height2}/g" \
+             dewarp_config/vc_mipi_dewarp_template.json > ${dewarp_file}
+ 
+-        pwd
+         echo "Create ${tuning_file}"
+         sed -e "s/{width}/${width}/g" \
+             -e "s/{height}/${height}/g" \
+@@ -169,12 +171,12 @@ while [ $# != 0 ] ; do
+ 
+ 	case "${option}" in
+     setup-c0)
+-        create_tuning_files 0 ${i2c_bus_address_c0} ${1} ${2}
++        create_tuning_files 0 ${1} ${2}
+         shift
+         shift
+         ;;
+     setup-c1)
+-        create_tuning_files 1 ${i2c_bus_address_c1} ${1} ${2}
++        create_tuning_files 1 ${1} ${2}
+         shift
+         shift
+         ;;
+@@ -186,8 +188,8 @@ while [ $# != 0 ] ; do
+ 		exit 0
+ 		;;
+     init)
+-        create_tuning_files 0 ${i2c_bus_address_c0}
+-        create_tuning_files 1 ${i2c_bus_address_c1}
++        create_tuning_files 0
++        create_tuning_files 1
+         ;;
+     restart)
+         restart_service
+-- 
+2.34.1
+
