@@ -1,1 +1,1 @@
-IMAGE_INSTALL:append = " v4l2-test"
+IMAGE_INSTALL:append = " v4l2-test test.sh"
