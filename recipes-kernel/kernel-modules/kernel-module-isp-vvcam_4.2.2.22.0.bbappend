@@ -2,6 +2,7 @@ FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"
 
 SRC_URI += "\
     file://0001-Added-Vision-Components-MIPI-CSI-2-driver.patch;patchdir=../.. \
+    file://0002-adjust-thresholds-of-version-specific-code-to-work-w.patch;patchdir=../.. \
     git://github.com/VC-MIPI-modules/vc_mipi_nxp.git;protocol=https;branch=develop;name=vc_mipi_nxp;destsuffix=vc_mipi_nxp \
     git://github.com/VC-MIPI-modules/vc_mipi_core.git;protocol=https;branch=nxp/develop;name=vc_mipi_core;destsuffix=vc_mipi_core \
 "

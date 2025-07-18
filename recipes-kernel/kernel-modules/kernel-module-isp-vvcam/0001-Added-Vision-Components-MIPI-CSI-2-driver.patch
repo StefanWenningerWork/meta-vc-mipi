@@ -1,81 +1,44 @@
-From 196e12c4bd3d192829f2cb93c8deaae7e476fb70 Mon Sep 17 00:00:00 2001
-From: Peter Martiessen <peter.martienssen@liquify-consulting.de>
-Date: Tue, 17 Jun 2025 18:54:04 +0000
+From 3ded3f42e33591de851e20c904b956af755afc27 Mon Sep 17 00:00:00 2001
+From: Stefan Wenninger <stefan.wenninger@evopro-ag.de>
+Date: Fri, 18 Jul 2025 11:54:38 +0000
 Subject: [PATCH] Added Vision Components MIPI CSI-2 driver
 
 ---
- vvcam/v4l2/sensor/Makefile               |  3 ++
- vvcam/v4l2/sensor/vc-mipi-vvcam/Makefile | 37 ++++++++++++++++++++++++
- 2 files changed, 40 insertions(+)
+ build-all-vvcam.sh                       | 1 +
+ vvcam/v4l2/sensor/Makefile               | 1 +
+ vvcam/v4l2/sensor/vc-mipi-vvcam/Makefile | 3 +++
+ 3 files changed, 5 insertions(+)
  create mode 100644 vvcam/v4l2/sensor/vc-mipi-vvcam/Makefile
 
+diff --git a/build-all-vvcam.sh b/build-all-vvcam.sh
+index 3863e75..5966689 100755
+--- a/build-all-vvcam.sh
++++ b/build-all-vvcam.sh
+@@ -43,3 +43,4 @@ cp vvcam/v4l2/sensor/os08a20/os08a20.ko modules
+ cp vvcam/v4l2/vvcam-isp.ko modules
+ cp vvcam/v4l2/video/vvcam-video.ko modules
+ cp vvcam/v4l2/sensor/camera-proxy-driver/basler-camera-driver-vvcam.ko modules
++cp vvcam/v4l2/sensor/vc-mipi-vvcam/vc-mipi-vvcam.ko modules
 diff --git a/vvcam/v4l2/sensor/Makefile b/vvcam/v4l2/sensor/Makefile
-index 92f515f..f19004e 100644
+index 61a69ff..a6adf75 100755
 --- a/vvcam/v4l2/sensor/Makefile
 +++ b/vvcam/v4l2/sensor/Makefile
-@@ -3,16 +3,19 @@ all:
- 	@cd os08a20; make || exit $$?;
- 	@cd ar1335;  make || exit $$?;
- 	@cd camera-proxy-driver;  make || exit $$?;
-+	@cd vc-mipi-vvcam;        make || exit $$?;
- 
- clean:
- 	@cd ov2775;   make clean;
- 	@cd os08a20;  make clean;
- 	@cd ar1335;   make clean;
- 	@cd camera-proxy-driver;   make clean;
-+	@cd vc-mipi-vvcam;         make clean;
- 
- modules_install:
- 	@cd ov2775;   make modules_install;
- 	@cd os08a20;  make modules_install;
- 	@cd ar1335;   make modules_install;
- 	@cd camera-proxy-driver;   make modules_install;
-+	@cd vc-mipi-vvcam;         make modules_install;
+@@ -2,4 +2,5 @@ obj-m += ov2775/
+ obj-m += os08a20/
+ obj-m += camera-proxy-driver/
+ obj-m += ar1335/
++obj-m += vc-mipi-vvcam/
  
 diff --git a/vvcam/v4l2/sensor/vc-mipi-vvcam/Makefile b/vvcam/v4l2/sensor/vc-mipi-vvcam/Makefile
 new file mode 100644
-index 0000000..9fe7c7e
+index 0000000..787a75b
 --- /dev/null
 +++ b/vvcam/v4l2/sensor/vc-mipi-vvcam/Makefile
-@@ -0,0 +1,37 @@
-+PWD := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-+
-+TARGET = vc-mipi-vvcam
-+
-+obj-m +=$(TARGET).o
-+$(TARGET)-objs += vc_mipi_camera.o vc_mipi_core.o vc_mipi_modules.o
-+
-+ccflags-y += -I$(PWD)/../../../common/
-+ccflags-y += -O2 -Werror -Wmissing-declarations -Wmissing-prototypes
-+
-+ARCH_TYPE ?= arm64
-+ANDROID ?= no
-+
-+ifeq ($(ANDROID), yes)
-+
-+V := 1
-+
-+all:
-+	@$(MAKE) V=$(V) -C $(KERNEL_SRC) ARCH=$(ARCH_TYPE) M=$(PWD) modules
-+modules_install:
-+	@$(MAKE) V=$(V) -C $(KERNEL_SRC) M=$(PWD) modules_install
-+clean:
-+	@rm -rf modules.order Module.symvers
-+	@find ../ -name "*.o" | xargs rm -f
-+	@find ../ -name "*.ko" | xargs rm -f
-+
-+else
-+
-+all:
-+	make -C $(KERNEL_SRC) ARCH=$(ARCH_TYPE) M=$(PWD) modules
-+modules_install:
-+	make -C $(KERNEL_SRC) M=$(PWD) modules_install
-+clean:
-+	rm -rf $($(TARGET)-objs)
-+	make -C $(KERNEL_SRC) M=$(PWD) clean
-+
-+endif
+@@ -0,0 +1,3 @@
++EXTRA_CFLAGS += -I$(PWD)/../common/ -O2 -Werror
++vc-mipi-vvcam-objs += vc_mipi_camera.o vc_mipi_core.o vc_mipi_modules.o
++obj-m += vc-mipi-vvcam.o
+\ No newline at end of file
 -- 
 2.34.1
 

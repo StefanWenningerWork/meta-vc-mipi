@@ -1,0 +1,41 @@
+From ae81feee1d5f12ca4602d30bdff1b18d79586f17 Mon Sep 17 00:00:00 2001
+From: Stefan Wenninger <stefan.wenninger@evopro-ag.de>
+Date: Fri, 18 Jul 2025 12:07:46 +0000
+Subject: [PATCH] adjust thresholds of version specific code to work with
+ 6.1.22
+
+---
+ vvcam/v4l2/sensor/vc-mipi-vvcam/vc_mipi_camera.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/vvcam/v4l2/sensor/vc-mipi-vvcam/vc_mipi_camera.c b/vvcam/v4l2/sensor/vc-mipi-vvcam/vc_mipi_camera.c
+index 9591818..760f471 100644
+--- a/vvcam/v4l2/sensor/vc-mipi-vvcam/vc_mipi_camera.c
++++ b/vvcam/v4l2/sensor/vc-mipi-vvcam/vc_mipi_camera.c
+@@ -991,7 +991,7 @@ error_power_off:
+         return ret;
+ }
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(6,0,0)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6,1,0)
+ static int vc_remove(struct i2c_client *client)
+ #else
+ static void vc_remove(struct i2c_client *client)
+@@ -1018,7 +1018,7 @@ static void vc_remove(struct i2c_client *client)
+         vc_set_power(device, 0);
+         vc_core_release(&device->cam);
+ 
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(6,0,0)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6,1,0)
+         return 0;
+ #endif
+ }
+@@ -1060,7 +1060,7 @@ static struct i2c_driver vc_i2c_driver = {
+                 .of_match_table = vc_dt_ids,
+         },
+         .id_table = vc_id,
+-#if LINUX_VERSION_CODE < KERNEL_VERSION(6,0,0)
++#if LINUX_VERSION_CODE < KERNEL_VERSION(6,3,0)
+         .probe_new = vc_probe,
+ #else
+         .probe     = vc_probe,
