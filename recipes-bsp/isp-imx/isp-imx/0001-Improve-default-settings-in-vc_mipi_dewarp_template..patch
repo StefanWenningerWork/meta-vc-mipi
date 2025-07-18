@@ -1,6 +1,6 @@
-From 35560d15341850488f1d9a0f7a702fb8d9cbbbd0 Mon Sep 17 00:00:00 2001
-From: Peter Martiessen <peter.martienssen@liquify-consulting.de>
-Date: Tue, 1 Jul 2025 12:18:13 +0000
+From 2f56b61dce67061283c6cf4c2a364936b28beeb7 Mon Sep 17 00:00:00 2001
+From: Stefan Wenninger <stefan.wenninger@evopro-ag.de>
+Date: Fri, 18 Jul 2025 08:54:49 +0000
 Subject: [PATCH] Improve default settings in vc_mipi_dewarp_template.json
 
 ---

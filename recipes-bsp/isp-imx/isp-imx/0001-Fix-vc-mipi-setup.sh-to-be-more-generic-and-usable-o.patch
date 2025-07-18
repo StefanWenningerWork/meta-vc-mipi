@@ -1,6 +1,6 @@
-From 1ee15681331f411b21b3ba9b82a91a5d8701f48f Mon Sep 17 00:00:00 2001
-From: Peter Martiessen <peter.martienssen@liquify-consulting.de>
-Date: Mon, 14 Jul 2025 19:35:36 +0000
+From c0bf0b7799fb80de2b2a64ea5606501d79caf14e Mon Sep 17 00:00:00 2001
+From: Stefan Wenninger <stefan.wenninger@evopro-ag.de>
+Date: Fri, 18 Jul 2025 08:56:14 +0000
 Subject: [PATCH] Fix vc-mipi-setup.sh to be more generic and usable on toradex
 
 ---

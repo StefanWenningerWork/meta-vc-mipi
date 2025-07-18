@@ -1,32 +1,32 @@
-From ba0e5c112f89b47f201b6582cddd35e6891cf95b Mon Sep 17 00:00:00 2001
-From: Peter Martiessen <peter.martienssen@liquify-consulting.de>
-Date: Tue, 17 Jun 2025 19:23:28 +0000
+From 349169483f53bb9548df6efce8599e7fc036f1b9 Mon Sep 17 00:00:00 2001
+From: Stefan Wenninger <stefan.wenninger@evopro-ag.de>
+Date: Fri, 18 Jul 2025 08:37:01 +0000
 Subject: [PATCH] Added VC MIPI CSI-2 driver
 
 ---
  build-all-isp.sh                              |    4 +
  .../vc_mipi_dewarp_template.json              |   35 +
  imx/run.sh                                    |   13 +-
- imx/start_isp.sh                              |   23 +-
+ imx/start_isp.sh                              |   22 +-
  imx/vc-mipi-setup.sh                          |  191 +++
  units/isi/CMakeLists.txt                      |    1 +
  units/isi/drv/vc-mipi/CMakeLists.txt          |  125 ++
- units/isi/drv/vc-mipi/calib/CMakeLists.txt    |   44 +
+ units/isi/drv/vc-mipi/calib/CMakeLists.txt    |   43 +
  .../vc-mipi/calib/vc_mipi_tuning_template.xml |  735 ++++++++++
  units/isi/drv/vc-mipi/source/vc-mipi.c        | 1256 +++++++++++++++++
- 10 files changed, 2425 insertions(+), 2 deletions(-)
+ 10 files changed, 2423 insertions(+), 2 deletions(-)
  create mode 100644 dewarp/dewarp_config/vc_mipi_dewarp_template.json
  create mode 100644 imx/vc-mipi-setup.sh
- create mode 100755 units/isi/drv/vc-mipi/CMakeLists.txt
+ create mode 100644 units/isi/drv/vc-mipi/CMakeLists.txt
  create mode 100644 units/isi/drv/vc-mipi/calib/CMakeLists.txt
  create mode 100644 units/isi/drv/vc-mipi/calib/vc_mipi_tuning_template.xml
  create mode 100644 units/isi/drv/vc-mipi/source/vc-mipi.c
 
 diff --git a/build-all-isp.sh b/build-all-isp.sh
-index 312cd13..c0d4de0 100755
+index a83fae9..d7ef954 100755
 --- a/build-all-isp.sh
 +++ b/build-all-isp.sh
-@@ -94,6 +94,8 @@ fi
+@@ -116,6 +116,8 @@ fi
  cp -a appshell/build/generated/${BUILD_DIR}/lib/*.so* ${ISP_LIB_DIR}
  cp -a appshell/build/generated/${BUILD_TYPE}/bin/OS08a20* ${ISP_BIN_DIR}
  cp -a appshell/build/generated/${BUILD_TYPE}/bin/os08a20* ${ISP_BIN_DIR}
@@ -35,7 +35,7 @@ index 312cd13..c0d4de0 100755
  cp -a appshell/build/generated/${BUILD_TYPE}/bin/isp_media_server ${ISP_BIN_DIR}
  cp -a appshell/build/generated/${BUILD_TYPE}/bin/*_test ${ISP_BIN_DIR}
  cp -a appshell/build/generated/${BUILD_DIR}/bin/*.cfg ${ISP_BIN_DIR}/
-@@ -109,10 +111,12 @@ cp -ra dewarp/dewarp_config/ ${ISP_BIN_DIR}
+@@ -131,10 +133,12 @@ cp -ra dewarp/dewarp_config/ ${ISP_BIN_DIR}
  #cp utils3rd/tools/ISP8000NANO_V1802/run.sh  ${ISP_BIN_DIR}/run-vsi.sh
  cp imx/run.sh ${ISP_BIN_DIR}/run.sh
  cp imx/start_isp.sh ${ISP_BIN_DIR}
@@ -129,46 +129,48 @@ index a9506d0..5684a78 100755
  			echo "ISP configuration \"$ISP_CONFIG\" unsupported."
  			echo -e "$USAGE" >&2
 diff --git a/imx/start_isp.sh b/imx/start_isp.sh
-index d544b4c..e14b35c 100755
+index d544b4c..92d57f3 100755
 --- a/imx/start_isp.sh
 +++ b/imx/start_isp.sh
-@@ -6,11 +6,13 @@
- # (c) NXP 2020-2022
- #
- 
-+./vc-mipi-setup.sh --service create
-+
- RUNTIME_DIR="$( cd "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )"
- NR_DEVICE_TREE_BASLER=$(grep basler-camera-vvcam `find /sys/firmware/devicetree/base/soc@0/ -name compatible | grep i2c` -l | wc -l 2> /dev/null)
+@@ -11,6 +11,7 @@ NR_DEVICE_TREE_BASLER=$(grep basler-camera-vvcam `find /sys/firmware/devicetree/
  NR_DEVICE_TREE_OV5640=$(grep ov5640 `find /sys/firmware/devicetree/base/soc@0/ -name compatible | grep i2c` -l | wc -l 2> /dev/null)
  NR_DEVICE_TREE_OS08A20=$(grep os08a20 `find /sys/firmware/devicetree/base/soc@0/ -name compatible | grep i2c` -l | wc -l 2> /dev/null)
--
+ 
 +NR_DEVICE_TREE_VC_MIPI=$(grep vc_mipi `find /sys/firmware/devicetree/base/soc@0/ -name compatible | grep i2c` -l | wc -l 2> /dev/null)
  
  # check if the basler device has been enabled in the device tree
  if [ $NR_DEVICE_TREE_BASLER -eq 1 ]; then
-@@ -69,6 +71,25 @@ elif [ $NR_DEVICE_TREE_OS08A20 -eq 2 ]; then
+@@ -21,7 +22,7 @@ if [ $NR_DEVICE_TREE_BASLER -eq 1 ]; then
+ 
+ 	if [ $NR_DEVICE_TREE_OV5640 -eq 0 ]; then
+ 
+-		# Default configuration for Basler daA3840-30mc: basler_4k
++		# Default configuration for Basler daA3840-30mc: VICE_TREE_OS08A20=$(grep os08a20 `find /sys/firmware
+ 		# Available configurations: basler_4k, basler_1080p60, basler_4khdr, basler_1080p60hdr
+ 		exec ./run.sh -c basler_4k -lm
+ 
+@@ -69,6 +70,25 @@ elif [ $NR_DEVICE_TREE_OS08A20 -eq 2 ]; then
  	# Available configurations: dual_Os08a20_1080p60, dual_Os08a20_1080p30hdr
  	exec ./run.sh -c dual_os08a20_1080p60 -lm
  
 +# check if the vc-mipi device has been enabled in the device tree
 +elif [ $NR_DEVICE_TREE_VC_MIPI -eq 1 ]; then
 +
-+		echo "Starting isp_media_server for Single VC MIPI CSI-2 camera"
++	echo "Starting isp_media_server for Single VC MIPI CSI-2 camera"
 +
-+		cd $RUNTIME_DIR
-+		# Default configuration for VC-MIPI: vc_mipi_single
-+		# Available configurations: vc_mipi_single
-+		exec ./run.sh -c vc_mipi_single -lm
++	cd $RUNTIME_DIR
++	# Default configuration for VC-MIPI: vc_mipi_single
++	# Available configurations: vc_mipi_single
++	exec ./run.sh -c vc_mipi_single -lm
 +
 +elif [ $NR_DEVICE_TREE_VC_MIPI -eq 2 ]; then
 +
-+		echo "Starting isp_media_server for Dual VC MIPI CSI-2 camera"
++	echo "Starting isp_media_server for Dual VC MIPI CSI-2 camera"
 +
-+		cd $RUNTIME_DIR
-+		# Default configuration for VC-MIPI: vc_mipi_single
-+		# Available configurations: vc_mipi_single
-+		exec ./run.sh -c vc_mipi_dual -lm
++	cd $RUNTIME_DIR
++	# Default configuration for VC-MIPI: vc_mipi_single
++	# Available configurations: vc_mipi_single
++	exec ./run.sh -c vc_mipi_dual -lm
 +
  else
  	# no device tree found exit with code no device or address
@@ -372,20 +374,17 @@ index 0000000..211fdac
 +done
 \ No newline at end of file
 diff --git a/units/isi/CMakeLists.txt b/units/isi/CMakeLists.txt
-index a91699b..32641d5 100755
+index 06d582a..251c16d 100755
 --- a/units/isi/CMakeLists.txt
 +++ b/units/isi/CMakeLists.txt
-@@ -87,6 +87,7 @@ include_directories(
-     )
+@@ -64,3 +64,4 @@ include(${UNITS_TOP_DIRECTORY}/targets.cmake)
  
+ # add sensor driver modules here
  add_subdirectory( drv/OS08a20 )
 +add_subdirectory( drv/vc-mipi )
- 
- add_custom_target(copy_shell_libs_${module} ALL
-        COMMENT "##Copy isi drv cfg to shell libs"
 diff --git a/units/isi/drv/vc-mipi/CMakeLists.txt b/units/isi/drv/vc-mipi/CMakeLists.txt
-new file mode 100755
-index 0000000..e2381f1
+new file mode 100644
+index 0000000..f5313f3
 --- /dev/null
 +++ b/units/isi/drv/vc-mipi/CMakeLists.txt
 @@ -0,0 +1,125 @@
@@ -514,12 +513,13 @@ index 0000000..e2381f1
 +
 +# create calib data targets
 +add_subdirectory(calib)
+\ No newline at end of file
 diff --git a/units/isi/drv/vc-mipi/calib/CMakeLists.txt b/units/isi/drv/vc-mipi/calib/CMakeLists.txt
 new file mode 100644
-index 0000000..b44b082
+index 0000000..e11d2a0
 --- /dev/null
 +++ b/units/isi/drv/vc-mipi/calib/CMakeLists.txt
-@@ -0,0 +1,44 @@
+@@ -0,0 +1,43 @@
 +cmake_minimum_required(VERSION 2.6)
 +
 +# use upper level module name
@@ -563,10 +563,9 @@ index 0000000..b44b082
 +    add_calib_target(calib_file)
 +endforeach(calib_file)
 +
-+
 diff --git a/units/isi/drv/vc-mipi/calib/vc_mipi_tuning_template.xml b/units/isi/drv/vc-mipi/calib/vc_mipi_tuning_template.xml
 new file mode 100644
-index 0000000..276d474
+index 0000000..d826da7
 --- /dev/null
 +++ b/units/isi/drv/vc-mipi/calib/vc_mipi_tuning_template.xml
 @@ -0,0 +1,735 @@
@@ -1305,6 +1304,7 @@ index 0000000..276d474
 +        </wdr>
 +    </tuning>
 +</matfile>
+\ No newline at end of file
 diff --git a/units/isi/drv/vc-mipi/source/vc-mipi.c b/units/isi/drv/vc-mipi/source/vc-mipi.c
 new file mode 100644
 index 0000000..8a3cd58
