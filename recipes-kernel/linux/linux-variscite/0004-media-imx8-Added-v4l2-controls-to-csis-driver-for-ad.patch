@@ -1,15 +1,15 @@
-From 6e05be771c4b289e4b3a0a34bf891a88f14f75c8 Mon Sep 17 00:00:00 2001
-From: Peter Martiessen <peter.martienssen@liquify-consulting.de>
-Date: Sun, 15 Jun 2025 10:51:24 +0000
-Subject: [PATCH 4/4] media: imx8: Added v4l2 controls to csis driver for
- advanced control
+From 8ab904371c15d4d67c0b828eda1135a601a02f63 Mon Sep 17 00:00:00 2001
+From: Stefan Wenninger <stefan.wenninger@evopro-ag.de>
+Date: Mon, 21 Jul 2025 09:30:20 +0000
+Subject: [PATCH] media: imx8: Added v4l2 controls to csis driver for advanced
+ control
 
 ---
  .../staging/media/imx/imx8-mipi-csi2-sam.c    | 115 ++++++++++++++++++
  1 file changed, 115 insertions(+)
 
 diff --git a/drivers/staging/media/imx/imx8-mipi-csi2-sam.c b/drivers/staging/media/imx/imx8-mipi-csi2-sam.c
-index 0b71fcdc2c53..5e850497fd13 100644
+index 86a1a1fedf93..006e989479ea 100644
 --- a/drivers/staging/media/imx/imx8-mipi-csi2-sam.c
 +++ b/drivers/staging/media/imx/imx8-mipi-csi2-sam.c
 @@ -43,6 +43,7 @@

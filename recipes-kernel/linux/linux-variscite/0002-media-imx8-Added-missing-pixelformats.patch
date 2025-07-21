@@ -1,7 +1,7 @@
-From 2538f172d6cee0458e1cd1dbfa4d1c82b1d4239f Mon Sep 17 00:00:00 2001
-From: Peter Martiessen <peter.martienssen@liquify-consulting.de>
-Date: Sun, 15 Jun 2025 10:30:48 +0000
-Subject: [PATCH 2/4] media: imx8: Added missing pixelformats
+From b398fede5732d564fef6ded410bc4db42387a9e3 Mon Sep 17 00:00:00 2001
+From: Stefan Wenninger <stefan.wenninger@evopro-ag.de>
+Date: Mon, 21 Jul 2025 09:07:16 +0000
+Subject: [PATCH] media: imx8: Added missing pixelformats
 
 ---
  drivers/staging/media/imx/imx8-isi-core.h     |   1 +
@@ -10,7 +10,7 @@ Subject: [PATCH 2/4] media: imx8: Added missing pixelformats
  3 files changed, 263 insertions(+), 23 deletions(-)
 
 diff --git a/drivers/staging/media/imx/imx8-isi-core.h b/drivers/staging/media/imx/imx8-isi-core.h
-index e7edb1d6fe0f..928fba0dbf72 100644
+index fd8d715c4cc9..b2ba1a440ac8 100644
 --- a/drivers/staging/media/imx/imx8-isi-core.h
 +++ b/drivers/staging/media/imx/imx8-isi-core.h
 @@ -62,6 +62,7 @@ enum mxc_isi_out_fmt {
@@ -213,7 +213,7 @@ index db11c809a3d3..adbc4f9c871d 100644
  		.fourcc		= V4L2_PIX_FMT_RGB565,
  		.depth		= { 16 },
 diff --git a/drivers/staging/media/imx/imx8-mipi-csi2-sam.c b/drivers/staging/media/imx/imx8-mipi-csi2-sam.c
-index c6af060c4497..c21bfeab4553 100644
+index 4e007820ae26..30041c53c2de 100644
 --- a/drivers/staging/media/imx/imx8-mipi-csi2-sam.c
 +++ b/drivers/staging/media/imx/imx8-mipi-csi2-sam.c
 @@ -190,6 +190,7 @@
